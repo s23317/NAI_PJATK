@@ -1,9 +1,0 @@
-# ninja log v5
-6	1216	6884993793341366	CMakeFiles/lab4.dir/main.cpp.obj	7b1bd254c5d148c0
-1217	1381	6884993794957888	lab4.exe	29eaf53cfdf918b
-6	2527	6885011941560132	CMakeFiles/lab4.dir/sample_geeksforgeeks.org.cpp.obj	74c41081a0c453a4
-6	225	6885012078345237	lab4.exe	fa157ccde1ef9be6
-5	2891	6885013122566794	CMakeFiles/lab4.dir/sample_geeksforgeeks.org.cpp.obj	74c41081a0c453a4
-2891	3030	6885013123915555	lab4.exe	fa157ccde1ef9be6
-6	2688	6885015913056072	CMakeFiles/lab4.dir/sample_geeksforgeeks.org.cpp.obj	74c41081a0c453a4
-2688	2826	6885015914400239	lab4.exe	fa157ccde1ef9be6
