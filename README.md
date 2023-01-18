@@ -1,4 +1,4 @@
 # s23317 NAI_PJATK
 <br>LAB1 +
-LAB5 +
-LAB7 +
+<br>LAB5 +
+<br>LAB7 +
