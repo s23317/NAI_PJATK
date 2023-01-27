@@ -1,166 +1,217 @@
-#include <functional>
 #include <iostream>
-#include <list>
-#include <optional>
-#include <random>
 #include <vector>
+#include <functional>
+#include <random>
+#include <cmath>
+#include <chrono>
 
-/**
- * @brief random number generator
- *
- * @param std::random_device
- * @return std::mt19937
- */
-std::mt19937 mt_generator((std::random_device()) ());
-/**
- * @brief goal function domain.
- */
-using domain_t = std::vector<double>;
+using namespace std;
 
-std::ostream &operator<<(std::ostream &o, domain_t &d) {
-    o << d[0] << " " << d[1];
-    return o;
-}
+random_device rd;
+mt19937 mt_generator(rd());
 
-/**
- * @brief calculate minimum point using hill climbing algorithm
- *
- * @param f goal function
- * @param start_point the start point for calculations
- * @param get_close_points function generating neighbours
- * @param max_iterations number of iterations
- * @return domain_t the domain ponint where the function f has minimum
- */
-domain_t hill_climbing(
-        const std::function<double(domain_t)> &f, domain_t start_point,
-        std::function<std::vector<domain_t>(domain_t)> get_close_points,
-        int max_iterations) {
-    domain_t best_p = start_point;
-    for (int iteration = 0; iteration < max_iterations; iteration++) {
-        auto close_points = get_close_points(best_p);
+int globalIterations = 1000000;
+
+auto brute_force = [](
+        const function<double(pair<double, double>)> &f,
+        const function<pair<double, double>(int, int)> &domain,
+        int iterations, int a, int b) {
+
+    auto current_p = domain(a, b);
+    auto best_point = current_p;
+
+    for (int i = 0; i < iterations; ++i) {
+        if (f(current_p) < f(best_point)) {
+            best_point = current_p;
+        }
+        current_p = domain(a, b);
+    }
+
+    return best_point;
+};
+
+auto hill_climbing = [](
+        const function<double(pair<double, double> pair)> &f,
+        const function<pair<double, double>(int, int)> &start_point,
+        const function<vector<pair<double, double>>(pair<double, double>, int, int)> &get_close_points,
+        int max_iterations, int a, int b) {
+
+    pair<double, double> best_p = start_point(a, b);
+
+    for (int i = 0; i < max_iterations; i++) {
+        auto close_points = get_close_points(best_p, a, b);
         auto best_neighbour =
-                *std::min_element(close_points.begin(), close_points.end(),
+                *min_element(close_points.begin(), close_points.end(),
                                   [f](auto a, auto b) { return f(a) > f(b); });
         if (f(best_neighbour) < f(best_p)) best_p = best_neighbour;
     }
     return best_p;
-}
+};
 
-/**
- * @brief calculate minimum point using hill climbing algorithm
- *
- * @param f goal function
- * @param start_point the start point for calculations
- * @param get_close_points function generating neighbours
- * @param max_iterations number of iterations
- * @return domain_t the domain ponint where the function f has minimum
- */
-domain_t tabu_method(
-        const std::function<double(domain_t)> &f, domain_t start_point,
-        std::function<std::vector<domain_t>(domain_t)> get_close_points,
-        int max_iterations) {
-    domain_t best_point = start_point;
-    domain_t current_point = start_point;
-    std::vector<domain_t> tabu_list = {current_point};
-    for (int iteration = 0; iteration < max_iterations; iteration++) {
-        std::cout << iteration << " " << current_point << " " << f(current_point)
-                  << std::endl;
-        std::vector<domain_t> close_points;
-        int tabu_idx = tabu_list.size() - 1;
-        do {
-            auto close_points_all = get_close_points(tabu_list.at(tabu_idx));
-            for (auto p: close_points_all) {
-                bool is_in_tabu = false;
-                for (auto p_tabu: tabu_list) {
-                    if (p == p_tabu) {
-                        is_in_tabu = true;
-                        break;
-                    }
-                }
-                if (!is_in_tabu) close_points.push_back(p);
+auto simulated_annealing = [](
+        const function<double(pair<double, double> pair)> &f,
+        const function<pair<double, double>(int, int)> &domain,
+        const function<pair<double, double>(pair<double, double>, int, int)> &neighbour,
+        int iterations, int a, int b) {
+
+    vector<pair<double, double>> pairsVector;
+    uniform_real_distribution<double> uk(0.0, 1.0);
+
+    auto best_point = domain(a, b);
+    pairsVector.push_back(best_point);
+
+    for (int i = 0; i < iterations; ++i) {
+        double ukValue = uk(mt_generator);
+        auto tk = neighbour(best_point, a, b);
+        if (f(tk) <= f(best_point)) {
+            best_point = tk;
+            pairsVector.push_back(best_point);
+        } else {
+            if (ukValue < exp(-(abs(f(tk) - f(best_point)) / (1 / log(i))))) {
+                best_point = tk;
+                pairsVector.push_back(best_point);
             }
-            tabu_idx--;
-        } while ((tabu_idx >= 0) && (close_points.size() == 0));
-        current_point =
-                *std::min_element(close_points.begin(), close_points.end(),
-                                  [f](auto a, auto b) { return f(a) < f(b); });
-        tabu_list.push_back(current_point);
-        if (f(best_point) > f(current_point)) best_point = current_point;
+        }
     }
     return best_point;
+};
+
+bool isInDomain(double x, int a, int b) {
+    return (a <= x) && (x <= b);
 }
 
-/**
- * @brief full review method that will check every domain point
- *
- * @param f goal function
- * @param domain_generator the function that will generate consecutive points
- * from the domain and it will return empty when there are no more points to
- * check
- * @return domain_t the point where f has its minimum
- */
-domain_t brute_force_method(
-        const std::function<double(domain_t)> &f,
-        const std::function<std::optional<domain_t>()> &domain_generator) {
-    auto best_p = domain_generator();
-    for (auto current_p = best_p; current_p.has_value();
-         current_p = domain_generator()) {
-        if (f(current_p.value()) < f(best_p.value())) {
-            best_p = current_p;
+auto xy_generator = [](int a, int b) {
+    uniform_real_distribution<> dis(a, b);
+    return pair<double, double>(dis(mt_generator), dis(mt_generator));
+};
+
+auto xy_generator2 = [](pair<double, double> p, int a, int b) -> vector<pair<double, double>> {
+    double precision = 1.0 / 128.0;
+    vector<pair<double, double>> ret;
+
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            pair<double, double> new_point = {p.first + (i * precision),
+                                              p.second + (j * precision)};
+            if (isInDomain(new_point.first, a, b) &&
+                isInDomain(new_point.second, a, b)) {
+                ret.push_back(new_point);
+            }
         }
     }
-    return best_p.value_or(domain_t());
-}
+    return ret;
+};
+
+auto xy_generator3 = [](pair<double, double> p, int a, int b) {
+    normal_distribution<> neighbour;
+    double firstPair, secondPair;
+
+    do {
+        firstPair = p.first + neighbour(mt_generator) * 0.01;
+    } while (firstPair < a && firstPair > b);
+
+    do {
+        secondPair = p.second + neighbour(mt_generator) * 0.01;
+    } while (secondPair < a && secondPair > b);
+
+    return pair<double, double>(firstPair, secondPair);
+};
 
 int main() {
-    const double precision = 1.0 / 16;
-    auto rastrigin_f_v = [](domain_t x) {
-        const double A = 10.0;
-        double ret = A * x.size();
-        for (int i = 0; i < x.size(); i++) {
-            ret = ret + x[i] * x[i] - A * std::cos(2 * M_PI * x[i]);
-        }
-        return ret;
+    using namespace chrono;
+
+    auto Beale = [](pair<double, double> pair) {
+        return pow((1.5 - pair.first + pair.first * pair.second), 2) +
+               pow(2.25 - pair.first + pow(pair.first * pair.second, 2), 2) +
+               pow(2.625 - pair.first + pow(pair.first * pair.second, 3), 2);
     };
-    auto sphere_f_v = [](domain_t x) { return x[0] * x[0] + x[1] * x[1]; };
-    auto sphere_f_generator = [precision]() -> std::optional<domain_t> {
-        static domain_t p = {-10, -10};
-        int i = 0;
-        for (i; i < p.size(); i++) {
-            p[i] = p[i] + precision;
-            if (p[i] < 10) return std::optional(p);
-            p[i] = -10;
-        }
-        return {};
+    auto Booth = [](pair<double, double> pair) {
+        return pow(pair.first + 2 * pair.second - 7, 2) +
+               pow(2 * pair.first + pair.second - 5, 2);
     };
-    auto get_random_point = []() -> domain_t {
-        std::uniform_real_distribution<double> distr(-10, 10);
-        return {distr(mt_generator), distr(mt_generator)};
+    auto McCormick = [](pair<double, double> pair) {
+        return sin(pair.first + pair.second) +
+               pow(pair.first - pair.second, 2) -
+               1.5 * pair.first + 2.5 * pair.second + 1;
     };
-    auto get_close_points_random = [](domain_t p0) -> std::vector<domain_t> {
-        std::uniform_real_distribution<double> distr(-10, 10);
-        return {{distr(mt_generator), distr(mt_generator)}};
-    };
-    auto get_close_points = [](domain_t p0) -> std::vector<domain_t> {
-        std::vector<domain_t> ret;
-        for (int i = 0; i < p0.size(); i++) {
-            domain_t v = p0;
-            v[i] += 1.0 / 128.0;
-            ret.push_back(v);
-            v = p0;
-            v[i] -= 1.0 / 128.0;
-            ret.push_back(v);
-        }
-        return ret;
-    };
-    auto best0 =
-            tabu_method(rastrigin_f_v, get_random_point(), get_close_points, 100000);
-    std::cout << "# tabu x = " << best0[0] << " " << best0[1] << std::endl;
-    // auto best1 = hill_climbing(sphere_f_v, get_random_point(),
-    // get_close_points_random, 1000000);
-    // std::cout << "# hill_climbing x = " << best1[0] << " " << best1[1] <<
-    // std::endl; auto best2 = brute_force_method(sphere_f_v,
-    // sphere_f_generator); std::cout << "# hill_climbing x = " << best2[0] << "
-    // " << best2[1] << std::endl;
+
+
+    cout << "Beale Function\n";
+
+    auto start = high_resolution_clock::now();
+    auto ackley_burte = brute_force(Beale, xy_generator, globalIterations, -4.5, 4.5);
+    auto stop = high_resolution_clock::now();
+    cout << "brute_force (x,y) = " << ackley_burte.first << ", " << ackley_burte.second
+         << " | result: " << Beale(ackley_burte)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n";
+    start = high_resolution_clock::now();
+    auto ackley_hill = hill_climbing(Beale, xy_generator, xy_generator2, globalIterations, -4.5, 4.5);
+    stop = high_resolution_clock::now();
+    cout << "hill_climbing (x,y) = " << ackley_hill.first << ", " << ackley_hill.second
+         << " | result: " << Beale(ackley_hill)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n";
+    start = high_resolution_clock::now();
+    auto ackley_annealing = simulated_annealing(Beale, xy_generator, xy_generator3, globalIterations, -4.5, 4.5);
+    stop = high_resolution_clock::now();
+    cout << "simulated_annealing (x,y) = " << ackley_annealing.first << ", " << ackley_annealing.second
+         << " | result: " << Beale(ackley_annealing)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n\n";
+
+    cout << "Booth Function\n";
+
+    start = high_resolution_clock::now();
+    auto himmelblau_burte = brute_force(Booth, xy_generator, globalIterations, -10, 10);
+    stop = high_resolution_clock::now();
+    cout << "brute_force (x,y) = " << himmelblau_burte.first << ", " << himmelblau_burte.second
+         << " | result: " << Booth(himmelblau_burte)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n";
+    start = high_resolution_clock::now();
+    auto himmelblau_hill = hill_climbing(Booth, xy_generator, xy_generator2, globalIterations, -10, 10);
+    stop = high_resolution_clock::now();
+    cout << "hill_climbing (x,y) = " << himmelblau_hill.first << ", " << himmelblau_hill.second
+         << " | result: " << Booth(himmelblau_hill)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n";
+    start = high_resolution_clock::now();
+    auto himmelblau_annealing = simulated_annealing(Booth, xy_generator, xy_generator3, globalIterations, -10, 10);
+    stop = high_resolution_clock::now();
+    cout << "simulated_annealing (x,y) = " << himmelblau_annealing.first << ", " << himmelblau_annealing.second
+         << " | result: " << Booth(himmelblau_annealing)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n\n";
+
+
+    cout << "McCormick Function\n";
+
+    start = high_resolution_clock::now();
+    auto holderTable_burte = brute_force(McCormick, xy_generator, globalIterations, -1.5, 4);
+    stop = high_resolution_clock::now();
+    cout << "brute_force (x,y) = " << holderTable_burte.first << ", " << holderTable_burte.second
+         << " | result: " << McCormick(holderTable_burte)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n";
+    start = high_resolution_clock::now();
+    auto holderTable_hill = hill_climbing(McCormick, xy_generator, xy_generator2, globalIterations, -1.5, 4);
+    stop = high_resolution_clock::now();
+    cout << "hill_climbing (x,y) = " << holderTable_hill.first << ", " << holderTable_hill.second
+         << " | result: " << McCormick(holderTable_hill)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n";
+    start = high_resolution_clock::now();
+    auto holderTable_annealing = simulated_annealing(McCormick, xy_generator, xy_generator3, globalIterations, -1.5,
+                                                     4);
+    stop = high_resolution_clock::now();
+    cout << "simulated_annealing (x,y) = " << holderTable_annealing.first << ", " << holderTable_annealing.second
+         << " | result: " << McCormick(holderTable_annealing)
+         << " | time: " << duration_cast<microseconds>(stop - start).count()
+         << "\n\n";
+
+    cout
+            << "Metoda najlepsza dla podobnej jakosci wynikow: BruteForce \n Metoda ktora sie nie nadaje - Hill Climbing \n";
+
     return 0;
 }
