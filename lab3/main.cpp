@@ -202,8 +202,7 @@ int main() {
          << " | time: " << duration_cast<microseconds>(stop - start).count()
          << "\n";
     start = high_resolution_clock::now();
-    auto holderTable_annealing = simulated_annealing(McCormick, xy_generator, xy_generator3, globalIterations, -1.5,
-                                                     4);
+    auto holderTable_annealing = simulated_annealing(McCormick, xy_generator, xy_generator3, globalIterations, -1.5, 4);
     stop = high_resolution_clock::now();
     cout << "simulated_annealing (x,y) = " << holderTable_annealing.first << ", " << holderTable_annealing.second
          << " | result: " << McCormick(holderTable_annealing)
