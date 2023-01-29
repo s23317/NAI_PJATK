@@ -97,7 +97,7 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
 
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < columns; c++) {
-                double value = cameraMatrix.at<double>(r, c);
+                double value = distanceCoefficients.at<double>(r, c);
                 outStream << value << endl;
             }
         }
@@ -188,9 +188,7 @@ void cameraCalibrationProcess(Mat &cameraMatrix, Mat distanceCoefficients) {
     Mat frame;
     Mat drawToFrame;
 
-
     vector<Mat> savedImages;
-
     vector<vector<Point2f>> markerCorners, rejectedCandidates;
 
     VideoCapture vid(0);
@@ -218,12 +216,10 @@ void cameraCalibrationProcess(Mat &cameraMatrix, Mat distanceCoefficients) {
             imshow("Webcam", drawToFrame);
         else
             imshow("Webcam", frame);
-
         char character = waitKey(1000 / framesPerSecond);
 
         switch (character) {
-
-            case ' ':   //save image
+            case ' ':   //save image space key
                 if (found) {
                     Mat temp;
                     frame.copyTo(temp);
@@ -231,15 +227,15 @@ void cameraCalibrationProcess(Mat &cameraMatrix, Mat distanceCoefficients) {
                 }
                 break;
 
-            case 13:
-                if (savedImages.size() > 15) {
+            case 13:    //start calib enter key
+                if (savedImages.size() > 10) {
                     cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix,
                                       distanceCoefficients);
                     saveCameraCalibration("CameraCalibration.txt", cameraMatrix, distanceCoefficients);
                 }
                 break;
 
-            case 27:
+            case 27:    //exit escape
                 return;
         }
     }
