@@ -151,7 +151,7 @@ int startWebcamMonitoring(const Mat &cameraMatrix, const Mat &distanceCoeffiecin
     Mat frame;
 
     vector<int> markerIds;
-    vector<vector<Point2f>> markerCorners, rejectedCandidated;
+    vector<vector<Point2f>> markerCorners, rejectedCandidates;
     aruco::DetectorParameters parameters;
 
     Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(
