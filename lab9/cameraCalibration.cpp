@@ -247,8 +247,8 @@ int main() {
 
     Mat distanceCoefficients;
 
-    cameraCalibrationProcess(cameraMatrix, distanceCoefficients);
-//    loadCameraCalibration("CameraCalibration.txt", cameraMatrix, distanceCoefficients);
+//    cameraCalibrationProcess(cameraMatrix, distanceCoefficients);
+    loadCameraCalibration("CameraCalibration.txt", cameraMatrix, distanceCoefficients);
     startWebcamMonitoring(cameraMatrix, distanceCoefficients, 0.099f);
 
 }
