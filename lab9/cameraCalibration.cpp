@@ -83,6 +83,9 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
         uint16_t rows = cameraMatrix.rows;
         uint16_t columns = cameraMatrix.cols;
 
+        outStream << rows << endl;
+        outStream << columns << endl;
+
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < columns; c++) {
                 double value = cameraMatrix.at<double>(r, c);
@@ -105,14 +108,86 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
     return false;
 }
 
-int main() {
+bool loadCameraCalibration(string name, Mat &cameraMatrix, Mat &distanceCoefficients) {
+    ifstream inStream(name);
+    if (inStream) {
+        uint16_t rows;
+        uint16_t columns;
 
+        inStream >> rows;
+        inStream >> columns;
+
+        cameraMatrix = Mat(Size(columns, rows), CV_64F);
+
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < columns; c++) {
+                double read = 0.0f;
+                inStream >> read;
+                cameraMatrix.at<double>(r, c) = read;
+                cout << cameraMatrix.at<double>(r, c) << "\n";
+            }
+        }
+        //Distance Coefficients
+        inStream >> rows;
+        inStream >> columns;
+
+        distanceCoefficients = Mat::zeros(rows, columns, CV_64F);
+
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < columns; c++) {
+                double read = 0.0f;
+                inStream >> read;
+                distanceCoefficients.at<double>(r, c) = read;
+                cout << distanceCoefficients.at<double>(r, c) << "\n";
+            }
+        }
+        inStream.close();
+        return true;
+    }
+    return false;
+}
+
+int startWebcamMonitoring(const Mat &cameraMatrix, const Mat &distanceCoeffiecints, float arucoSquareDimensions) {
+    Mat frame;
+
+    vector<int> markerIds;
+    vector<vector<Point2f>> markerCorners, rejectedCandidated;
+    aruco::DetectorParameters parameters;
+
+    Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(
+            aruco::PREDEFINED_DICTIONARY_NAME::DICT_6X6_250);
+
+    VideoCapture vid(0);
+
+    if (!vid.isOpened()) {
+        return -1;
+    }
+
+    namedWindow("Webcam", WINDOW_AUTOSIZE);
+    vector<Vec3d> rotationVectors, translationVectors;
+
+    while (true) {
+        if (!vid.read(frame))
+            break;
+        aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIds);
+        aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoeffiecints,
+                                         rotationVectors, translationVectors);
+
+        for (int i = 0; i < markerIds.size(); i++) {
+            drawFrameAxes(frame, cameraMatrix, distanceCoeffiecints, rotationVectors[i], translationVectors[i], 0.1f);
+        }
+        imshow("Webcam", frame);
+        if (waitKey(30) >= 0) {
+            break;
+        }
+    }
+    return 1;
+}
+
+void cameraCalibrationProcess(Mat &cameraMatrix, Mat distanceCoefficients) {
     Mat frame;
     Mat drawToFrame;
 
-    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);
-
-    Mat distanceCoefficients;
 
     vector<Mat> savedImages;
 
@@ -121,7 +196,7 @@ int main() {
     VideoCapture vid(0);
 
     if (!vid.isOpened()) {
-        return 0;
+        return;
     }
 
     int framesPerSecond = 20;
@@ -160,16 +235,24 @@ int main() {
                 if (savedImages.size() > 15) {
                     cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix,
                                       distanceCoefficients);
-                    saveCameraCalibration("CameraCalibration", cameraMatrix, distanceCoefficients);
+                    saveCameraCalibration("CameraCalibration.txt", cameraMatrix, distanceCoefficients);
                 }
                 break;
 
             case 27:
-                return 0;
+                return;
         }
-
     }
+}
 
-    return 0;
+int main() {
+
+    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);
+
+    Mat distanceCoefficients;
+
+    cameraCalibrationProcess(cameraMatrix, distanceCoefficients);
+//    loadCameraCalibration("CameraCalibration.txt", cameraMatrix, distanceCoefficients);
+    startWebcamMonitoring(cameraMatrix, distanceCoefficients, 0.099f);
 
 }
