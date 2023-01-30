@@ -1,36 +1,36 @@
 lab1/.idea/
-lab1/cmake-build-debug
+lab1/cmake-build*
 
 lab2/.idea/
-lab2/cmake-build-debug
+lab2/cmake-build*
 
 lab3/.idea/
-lab3/cmake-build-debug
+lab3/cmake-build*
 
 lab4/.idea/
-lab4/cmake-build-debug
+lab4/cmake-build*
 
 lab5/.idea/
-lab5/cmake-build-debug
+lab5/cmake-build*
 
 lab5-1/.idea/
-lab5-1/cmake-build-debug
+lab5-1/cmake-build*
 
 lab7/.idea/
-lab7/cmake-build-debug
+lab7/cmake-build*
 
 lab7-py/.idea/
 lab7-py/venv
 
 lab8/.idea/
-lab8/cmake-build-debug
+lab8/cmake-build*
 
 lab9/.idea/
 lab9/steps
-lab9/cmake-build-debug
+lab9/cmake-build*
 
 lab11/.idea/
-lab11/cmake-build-debug
+lab11/cmake-build*
 
 lab12/.idea/
-lab12/cmake-build-debug
+lab12/cmake-build*

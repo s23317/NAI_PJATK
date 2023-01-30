@@ -8,8 +8,8 @@ def nothing(x):
     pass
 
 
-threshold1 = 100
-threshold2 = 100
+threshold1 = 200
+threshold2 = 200
 cv2.namedWindow("trackbars")
 cv2.createTrackbar("threshold1", "trackbars", threshold1, 500, nothing)
 cv2.createTrackbar("threshold2", "trackbars", threshold2, 500, nothing)

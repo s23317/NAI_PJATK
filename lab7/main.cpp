@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
     namedWindow("Window", WINDOW_AUTOSIZE); // Create a window for display.
     int i = 0;
 
-    int threshold1 = 100;
-    int threshold2 = 100;
+    int threshold1 = 200;
+    int threshold2 = 200;
     namedWindow("trackbars");
     createTrackbar("threshold1", "trackbars", &threshold1, 500);
     createTrackbar("threshold2", "trackbars", &threshold2, 500);
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 
         imshow("Window", frame);
 
-        cout << "Czas " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << " mikrosekund" << endl;
+        cout << "Czas przetwarzania obrazu " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << " mikrosekund" << endl;
 
     }
     return 0;
