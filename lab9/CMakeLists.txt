@@ -3,7 +3,7 @@ project(ocvdemo)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(ocvdemo cameraCalibration.cpp)
+add_executable(ocvdemo arucoMarkers.cpp)
 
 set(OpenCV_DIR "C:\\Users\\antek\\Documents\\NAI\\opencv\\opencv-4.6.0\\cmake-build-release")
 
