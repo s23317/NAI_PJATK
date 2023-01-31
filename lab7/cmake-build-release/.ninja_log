@@ -1,7 +1,0 @@
-# ninja log v5
-1	1192	6967574828640233	CMakeFiles/ocvdemo.dir/main.cpp.obj	ffff90afb425a260
-1195	1305	6967574829708959	ocvdemo.exe	6c4b93ae60c08170
-9	1633	6967577585683671	CMakeFiles/ocvdemo.dir/main.cpp.obj	ffff90afb425a260
-1634	1771	6967577587001738	ocvdemo.exe	6c4b93ae60c08170
-6	1519	6967578166898586	CMakeFiles/ocvdemo.dir/main.cpp.obj	ffff90afb425a260
-1519	1633	6967578167998535	ocvdemo.exe	6c4b93ae60c08170
