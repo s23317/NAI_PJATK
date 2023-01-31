@@ -108,7 +108,7 @@ int main() {
             }
         }
 
-        auto found2 = find(markerIds.begin(), markerIds.end(), 22);
+        auto found2 = find(markerIds.begin(), markerIds.end(), 23);
         if (found2 != markerIds.end()) {
             int foundIdx = distance(markerIds.begin(), found2);
             auto found = markerCorners.at(foundIdx);
